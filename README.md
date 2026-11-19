@@ -10,6 +10,10 @@ While developing the module, by using `yarn dev` the compiler will be run in wat
 
 ## Changes
 
+### v99.0.0
+
+Same features as v4.0.5. Version set high so official Bitfocus releases of `behringer-x32` will not supersede this personal fork.
+
 ### v4.0.5
 
 Personal fork (not for upstream). Adds:
