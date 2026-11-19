@@ -12,6 +12,7 @@ export type VariablesSchema = {
 	selected_channel: string
 	selected_name: string
 	undo_time: string
+	dca_spill: string
 	[key: `name_${string}`]: string
 	[key: `color_${string}`]: string
 	[key: `fader_${string}`]: number

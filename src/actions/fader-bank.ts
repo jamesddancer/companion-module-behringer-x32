@@ -1,6 +1,6 @@
 import type { CompanionActionDefinitions } from '@companion-module/base'
 import type { ActionsProps } from './main.js'
-import { CHOICES_ON_OFF, convertChoices, GetTargetChoices, MUTE_TOGGLE } from '../choices.js'
+import { CHOICES_DCA_SPILL, CHOICES_ON_OFF, convertChoices, GetTargetChoices, MUTE_TOGGLE } from '../choices.js'
 import { actionSubscriptionWrapper, getResolveOnOffMute } from './util.js'
 import { ParseRefOptions, parseRefToPaths } from '../paths.js'
 
@@ -44,6 +44,12 @@ export type FaderBankActionsSchema = {
 	'user-bank': {
 		options: {
 			bank: number
+		}
+	}
+	'dca-spill': {
+		options: {
+			dca: number
+			toggle: boolean
 		}
 	}
 }
@@ -361,6 +367,46 @@ export function getFaderBankActions(props: ActionsProps): CompanionActionDefinit
 					value: action.options.bank,
 				})
 			},
+		},
+		'dca-spill': {
+			name: 'DCA Spill',
+			description:
+				'Spill a single DCA group onto the channel fader bank, or turn spill off. Requires console firmware 4.04 or later. Sends /-stat/dcaspill as an integer where 0 = Off, 1 = DCA 1, 2 = DCA 2, ... 8 = DCA 8 (from Maillot unofficial OSC protocol: range [0...8], 0 means no spill is ongoing).',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'DCA',
+					id: 'dca',
+					...convertChoices(CHOICES_DCA_SPILL),
+					default: 1,
+					disableAutoExpression: true,
+				},
+				{
+					type: 'checkbox',
+					label: 'Toggle (turn off if this DCA is already spilled)',
+					id: 'toggle',
+					default: false,
+				},
+			],
+			...actionSubscriptionWrapper(props, {
+				getPath: () => `/-stat/dcaspill`,
+				execute: (action, cachedData) => {
+					let value = action.options.dca
+					if (action.options.toggle) {
+						const current = cachedData && cachedData[0]?.type === 'i' ? cachedData[0].value : undefined
+						if (current === value) {
+							value = 0
+						}
+					}
+
+					return {
+						type: 'i',
+						value,
+					}
+				},
+				shouldSubscribe: (options) => options.toggle,
+				optionsToMonitorForSubscribe: ['toggle'],
+			}),
 		},
 	}
 }

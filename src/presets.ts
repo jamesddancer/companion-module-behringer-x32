@@ -1,7 +1,7 @@
 import { X32State } from './state.js'
 import { CompanionPresetDefinitions, CompanionPresetSection } from '@companion-module/base'
 import { InstanceBaseExt, X32Types } from './util.js'
-import { GetLevelsChoiceConfigs, MUTE_TOGGLE } from './choices.js'
+import { CHOICES_DCA_SPILL, GetLevelsChoiceConfigs, MUTE_TOGGLE } from './choices.js'
 
 export function GetPresetsList(
 	_instance: InstanceBaseExt,
@@ -400,7 +400,55 @@ export function GetPresetsList(
 		}
 	}
 
+	const dcaSpillPresetIds: string[] = []
+	for (const choice of CHOICES_DCA_SPILL) {
+		const id = `dca-spill-${choice.id}`
+		const isOff = choice.id === 0
+		dcaSpillPresetIds.push(id)
+		presets[id] = {
+			name: isOff ? 'DCA Spill Off' : `DCA Spill ${choice.label}`,
+			type: 'simple',
+			style: {
+				text: isOff ? 'DCA Spill\nOff' : `Spill\n${choice.label}`,
+				size: 'auto',
+				color: 0xffffff,
+				bgcolor: 0x000000,
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'dca-spill',
+							options: {
+								dca: choice.id,
+								toggle: !isOff,
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [
+				{
+					feedbackId: 'dca-spill',
+					options: {
+						dca: choice.id,
+					},
+					style: {
+						bgcolor: 0x00ff7f,
+						color: 0x000000,
+					},
+				},
+			],
+		}
+	}
+
 	const structure: CompanionPresetSection<X32Types>[] = [
+		{
+			id: 'dca-spill',
+			name: 'DCA Spill',
+			definitions: dcaSpillPresetIds,
+		},
 		{
 			id: 'xlive',
 			name: 'X-Live',

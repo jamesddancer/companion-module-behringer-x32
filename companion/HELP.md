@@ -24,6 +24,7 @@ We support the following actions:
 | Load Console Snippet                                           | Loads the given snippet from the consoles internal snippet list 0-99                                               |
 | Tape Operation                                                 | Stop,Play,PlayPause,Record,RecordPause,Fast Forward,Rewind of the tape Deck                                        |
 | Talkback Talk                                                  | Talkback talk on/off                                                                                               |
+| DCA Spill                                                      | Spill a single DCA onto the channel fader bank, or turn spill off (firmware 4.04+, 0=Off, 1-8=DCA 1-8)             |
 
 for additional actions please raise a feature request at [github](https://github.com/bitfocus/companion-module-behringer-x32)
 

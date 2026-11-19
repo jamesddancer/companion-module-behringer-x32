@@ -25,6 +25,7 @@ import {
 	OscillatorDestinationsParseOptions,
 	TalkbackDestinationsParseOptions,
 	GetTargetChoices,
+	CHOICES_DCA_SPILL,
 } from './choices.js'
 import { compareNumber, floatToDB, InstanceBaseExt, padNumber, stringifyValueAlways } from './util.js'
 import { UserRouteInPath, UserRouteOutPath, parseRefToPaths, ParseRefOptions } from './paths.js'
@@ -213,6 +214,12 @@ export type FeedbacksSchema = {
 		type: 'boolean'
 		options: {
 			bank: number
+		}
+	}
+	'dca-spill': {
+		type: 'boolean'
+		options: {
+			dca: number
 		}
 	}
 	screens: {
@@ -1434,6 +1441,30 @@ export function GetFeedbacksList(
 			...feedbackSubscriptionWrapper({
 				getPath: () => `/-stat/userbank`,
 				getValue: (evt, data) => getDataNumber(data, 0) == evt.options.bank,
+			}),
+		},
+		'dca-spill': {
+			type: 'boolean',
+			name: 'DCA Spill active',
+			description:
+				'True when the selected DCA is currently spilled onto the channel fader bank (or when Off is selected and no spill is ongoing). Requires firmware 4.04 or later. Mapping: 0 = Off, 1 = DCA 1, ... 8 = DCA 8.',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'DCA',
+					id: 'dca',
+					...convertChoices(CHOICES_DCA_SPILL),
+					default: 1,
+					disableAutoExpression: true,
+				},
+			],
+			defaultStyle: {
+				bgcolor: 0x00ff7f,
+				color: 0x000000,
+			},
+			...feedbackSubscriptionWrapper({
+				getPath: () => `/-stat/dcaspill`,
+				getValue: (evt, data) => getDataNumber(data, 0) == evt.options.dca,
 			}),
 		},
 		screens: {

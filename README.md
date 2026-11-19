@@ -10,6 +10,17 @@ While developing the module, by using `yarn dev` the compiler will be run in wat
 
 ## Changes
 
+### v4.0.4
+
+Personal fork of the official module (not for upstream). Adds DCA Spill control:
+
+- Action `dca-spill` to spill a single DCA onto the channel fader bank, or turn spill off, with an optional toggle
+- Feedback `dca-spill` when a given DCA (or Off) is the current spill
+- Variable `dca_spill` for the current spill (`Off` or `DCA 1` ... `DCA 8`)
+- Presets for Off and each DCA
+
+Requires console firmware 4.04 or later. OSC mapping: `/-stat/dcaspill` integer `0` = Off, `1` = DCA 1, ... `8` = DCA 8.
+
 ### v4.0
 
 - Update to 2.0 module api

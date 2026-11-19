@@ -1,7 +1,7 @@
 import type { OSCMetaArgument, StringKeys } from '@companion-module/base'
 import { getStringArg } from './util.js'
 import type { X32State } from '../state.js'
-import { getColorChoiceFromId, GetNameFromState, GetTargetPaths } from '../choices.js'
+import { getColorChoiceFromId, GetNameFromState, GetTargetPaths, getDcaSpillLabel } from '../choices.js'
 import { floatToDB } from '../util.js'
 import { VariablesSchema } from './schema.js'
 
@@ -154,6 +154,14 @@ export const VariableDefinitions: MyVariableDefinitions = {
 		oscPath: '/-undo/time',
 		getValue: (args) => {
 			return args && args[0]?.type === 's' ? args[0].value : '--:--:--'
+		},
+	},
+	dca_spill: {
+		name: 'Current DCA Spill',
+		oscPath: '/-stat/dcaspill',
+		getValue: (args) => {
+			const value = args && args[0]?.type === 'i' ? args[0].value : 0
+			return getDcaSpillLabel(value)
 		},
 	},
 }

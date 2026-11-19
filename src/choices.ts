@@ -39,6 +39,22 @@ export const CHOICES_ON_OFF: DropdownChoice<number>[] = [
 	{ id: 0, label: 'Off' },
 ]
 
+export const CHOICES_DCA_SPILL: DropdownChoice<number>[] = [
+	{ id: 0, label: 'Off' },
+	{ id: 1, label: 'DCA 1' },
+	{ id: 2, label: 'DCA 2' },
+	{ id: 3, label: 'DCA 3' },
+	{ id: 4, label: 'DCA 4' },
+	{ id: 5, label: 'DCA 5' },
+	{ id: 6, label: 'DCA 6' },
+	{ id: 7, label: 'DCA 7' },
+	{ id: 8, label: 'DCA 8' },
+]
+
+export function getDcaSpillLabel(value: number | undefined): string {
+	return CHOICES_DCA_SPILL.find((choice) => choice.id === value)?.label ?? 'Unknown'
+}
+
 export const CHOICES_COLOR: DropdownChoice<string>[] = [
 	{ label: 'Off', id: 'off' },
 	{ label: 'Red', id: 'red' },
