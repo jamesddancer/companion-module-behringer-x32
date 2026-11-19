@@ -43,6 +43,27 @@ export interface SourcePaths {
 	trim?: {
 		path: string
 	}
+	hpf?: {
+		on: string
+		freq: string
+		slope: string
+	}
+	invert?: {
+		path: string
+	}
+	eqOn?: {
+		path: string
+	}
+	gateOn?: {
+		path: string
+	}
+	dynOn?: {
+		path: string
+	}
+	grp?: {
+		dca: string
+		mute: string
+	}
 	config?: {
 		name: string
 		color: string
@@ -167,6 +188,16 @@ export const MainStereoPaths: SourcePaths = {
 	pan: {
 		path: `/main/st/mix/pan`,
 	},
+	eqOn: {
+		path: `/main/st/eq/on`,
+	},
+	dynOn: {
+		path: `/main/st/dyn/on`,
+	},
+	grp: {
+		dca: `/main/st/grp/dca`,
+		mute: `/main/st/grp/mute`,
+	},
 	config: {
 		name: `/main/st/config/name`,
 		color: `/main/st/config/color`,
@@ -202,6 +233,16 @@ export const MainMonoPaths: SourcePaths = {
 	},
 	level: {
 		path: `/main/m/mix/fader`,
+	},
+	eqOn: {
+		path: `/main/m/eq/on`,
+	},
+	dynOn: {
+		path: `/main/m/dyn/on`,
+	},
+	grp: {
+		dca: `/main/m/grp/dca`,
+		mute: `/main/m/grp/mute`,
 	},
 	config: {
 		name: `/main/m/config/name`,
@@ -269,6 +310,27 @@ export function getChannelPaths(channelNumber: number): SourcePaths | null {
 		trim: {
 			path: `${basePath}/preamp/trim`,
 		},
+		hpf: {
+			on: `${basePath}/preamp/hpon`,
+			freq: `${basePath}/preamp/hpf`,
+			slope: `${basePath}/preamp/hpslope`,
+		},
+		invert: {
+			path: `${basePath}/preamp/invert`,
+		},
+		eqOn: {
+			path: `${basePath}/eq/on`,
+		},
+		gateOn: {
+			path: `${basePath}/gate/on`,
+		},
+		dynOn: {
+			path: `${basePath}/dyn/on`,
+		},
+		grp: {
+			dca: `${basePath}/grp/dca`,
+			mute: `${basePath}/grp/mute`,
+		},
 		config: {
 			name: `${basePath}/config/name`,
 			color: `${basePath}/config/color`,
@@ -313,6 +375,16 @@ export function getAuxPaths(auxNumber: number): SourcePaths | null {
 		trim: {
 			path: `${basePath}/preamp/trim`,
 		},
+		invert: {
+			path: `${basePath}/preamp/invert`,
+		},
+		eqOn: {
+			path: `${basePath}/eq/on`,
+		},
+		grp: {
+			dca: `${basePath}/grp/dca`,
+			mute: `${basePath}/grp/mute`,
+		},
 		config: {
 			name: `${basePath}/config/name`,
 			color: `${basePath}/config/color`,
@@ -349,6 +421,13 @@ export function getFxPaths(fxNumber: number): SourcePaths | null {
 		pan: {
 			path: `${basePath}/mix/pan`,
 		},
+		eqOn: {
+			path: `${basePath}/eq/on`,
+		},
+		grp: {
+			dca: `${basePath}/grp/dca`,
+			mute: `${basePath}/grp/mute`,
+		},
 		config: {
 			name: `${basePath}/config/name`,
 			color: `${basePath}/config/color`,
@@ -384,6 +463,16 @@ export function getBusPaths(busNumber: number): SourcePaths | null {
 		},
 		pan: {
 			path: `${basePath}/mix/pan`,
+		},
+		eqOn: {
+			path: `${basePath}/eq/on`,
+		},
+		dynOn: {
+			path: `${basePath}/dyn/on`,
+		},
+		grp: {
+			dca: `${basePath}/grp/dca`,
+			mute: `${basePath}/grp/mute`,
 		},
 		config: {
 			name: `${basePath}/config/name`,
@@ -429,6 +518,16 @@ export function getMatrixPaths(matrixNumber: number): SourcePaths | null {
 		},
 		level: {
 			path: `${basePath}/mix/fader`,
+		},
+		eqOn: {
+			path: `${basePath}/eq/on`,
+		},
+		dynOn: {
+			path: `${basePath}/dyn/on`,
+		},
+		grp: {
+			dca: `${basePath}/grp/dca`,
+			mute: `${basePath}/grp/mute`,
 		},
 		config: {
 			name: `${basePath}/config/name`,

@@ -24,8 +24,16 @@ import {
 	InstanceStatus,
 	OSCSomeArguments,
 } from '@companion-module/base'
-import type { InstanceBaseExt, X32Types } from './util.js'
-import { STORED_CHANNEL_ID, VariableDefinitions } from './variables/main.js'
+import { padNumber, type InstanceBaseExt, type X32Types } from './util.js'
+import {
+	METER_DB_CHANGE_THRESHOLD,
+	METER_SOURCES,
+	METER_TIME_FACTOR,
+	meterLinearToDb,
+	meterStatePath,
+	parseMetersBlob,
+} from './meters.js'
+import { SHOW_VARIABLE_IDS, STORED_CHANNEL_ID, VariableDefinitions } from './variables/main.js'
 import { GetCompanionVariableDefinitions, GetCompanionVariableValues } from './variables/init.js'
 
 export const UpgradeScripts: CompanionStaticUpgradeScript<X32Config>[] = [
@@ -72,6 +80,8 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 	private readonly invalidatedVariables = new Set<string>()
 	private readonly debounceUpdateVariables: () => void
 	private readonly variableInvalidationMap = new Map<string, string[]>()
+	private readonly tapTimes = new Map<string, number>()
+	private readonly lastMeterDb = new Map<string, number>()
 
 	/**
 	 * Create an instance of an X32 module.
@@ -175,6 +185,8 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 		this.x32State.detach(this)
 		this.x32State = new X32State()
 		this.x32State.attach(this)
+		this.lastMeterDb.clear()
+		this.tapTimes.clear()
 
 		this.x32Subscriptions = new X32Subscriptions()
 
@@ -244,6 +256,7 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 				transitions: this.transitions,
 				state: this.x32State,
 				ensureLoaded: this.queueEnsureLoaded,
+				recordTapTempo: this.recordTapTempo,
 				sendOsc: (cmd: string, args: OSCSomeArguments): void => {
 					// HACK: We send commands on a different port than we run /xremote on, so that we get change events for what we send.
 					// Otherwise we can have no confirmation that a command was accepted
@@ -396,6 +409,11 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 			const args = message.args as osc.MetaArgument[]
 			this.x32State.set(message.address, args)
 
+			if (message.address === '/meters/0' || message.address === '/meters/2') {
+				this.handleMeters(message.address, args)
+				return
+			}
+
 			if (this.inFlightRequests[message.address]) {
 				this.inFlightRequests[message.address]()
 				delete this.inFlightRequests[message.address]
@@ -421,6 +439,7 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 						// Load the initial data
 						this.loadVariablesData()
 						this.loadPresetData()
+						this.ensureCurrentShowNames()
 					}
 					break
 			}
@@ -440,9 +459,97 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 						{ type: 'i', value: 20 },
 					],
 				})
+				if (this.config.enableMeters) {
+					for (const meter of ['/meters/0', '/meters/2']) {
+						this.osc.send({
+							address: '/meters',
+							args: [
+								{ type: 's', value: meter },
+								{ type: 'i', value: METER_TIME_FACTOR },
+							],
+						})
+					}
+				}
 			} catch (_e) {
 				// Ignore
 			}
+		}
+	}
+
+	public recordTapTempo = (key: string, maxIntervalMs: number): number | null => {
+		const now = Date.now()
+		const previous = this.tapTimes.get(key)
+		this.tapTimes.set(key, now)
+		if (previous === undefined) return null
+
+		const delta = now - previous
+		if (delta < 50 || delta > maxIntervalMs) return null
+
+		this.x32State.set('/tap/tempo', [{ type: 'i', value: Math.round(delta) }])
+		this.invalidatedVariables.add('tap_tempo_ms')
+		this.invalidatedVariables.add('tap_tempo_bpm')
+		this.debounceUpdateVariables()
+		return delta
+	}
+
+	private ensureCurrentShowNames(): void {
+		const indexArgs = this.x32State.get('/-show/prepos/current')
+		const index = indexArgs && indexArgs[0]?.type === 'i' ? indexArgs[0].value : 0
+		const padded = padNumber(index, 3)
+		for (const kind of ['cue', 'scene', 'snippet'] as const) {
+			const path = `/-show/showfile/${kind}/${padded}/name`
+			const existing = this.variableInvalidationMap.get(path) ?? []
+			for (const id of SHOW_VARIABLE_IDS) {
+				if (!existing.includes(id)) existing.push(id)
+			}
+			this.variableInvalidationMap.set(path, existing)
+			this.queueEnsureLoaded(path)
+		}
+	}
+
+	private handleMeters(address: string, args: osc.MetaArgument[]): void {
+		const raw = args[0]
+		const blob = raw && raw.type === 'b' ? raw.value : undefined
+		const values = parseMetersBlob(blob)
+		if (!values) return
+
+		const changedVariableIds: string[] = []
+		for (const source of METER_SOURCES) {
+			let linear: number | undefined
+			if (address === '/meters/0' && source.meters0Index >= 0) {
+				linear = values[source.meters0Index]
+			} else if (address === '/meters/2' && source.meters2Index !== undefined) {
+				linear = values[source.meters2Index]
+			}
+			if (linear === undefined) continue
+
+			const db = meterLinearToDb(linear)
+			const previousDb = this.lastMeterDb.get(source.id)
+			const previousArgs = this.x32State.get(meterStatePath(source.id))
+			const previousLinear = previousArgs && previousArgs[0]?.type === 'f' ? previousArgs[0].value : undefined
+			const clipChanged = previousLinear !== undefined && previousLinear >= 1 !== linear >= 1
+			const previousSignal = previousLinear !== undefined && meterLinearToDb(previousLinear) >= -60
+			const signalChanged = previousLinear !== undefined && previousSignal !== db >= -60
+			const dbChanged =
+				previousDb === undefined ||
+				!Number.isFinite(previousDb) ||
+				!Number.isFinite(db) ||
+				Math.abs(db - previousDb) >= METER_DB_CHANGE_THRESHOLD
+
+			if (!dbChanged && !clipChanged && !signalChanged) continue
+
+			this.lastMeterDb.set(source.id, db)
+			this.x32State.set(meterStatePath(source.id), [{ type: 'f', value: linear }])
+			changedVariableIds.push(source.variableId)
+			for (const feedbackId of this.x32Subscriptions.getFeedbacks(meterStatePath(source.id))) {
+				this.messageFeedbacks.add(feedbackId)
+			}
+		}
+
+		if (changedVariableIds.length > 0) {
+			changedVariableIds.forEach((id) => this.invalidatedVariables.add(id))
+			this.debounceUpdateVariables()
+			this.debounceMessageFeedbacks()
 		}
 	}
 
@@ -520,6 +627,12 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 		// Name changes mean the actions&feedbacks need to be regenerated
 		if (msg.address.match('/config/name$')) {
 			this.debounceUpdateCompanionBits()
+		}
+
+		if (msg.address === '/-show/prepos/current' || msg.address === '/-prefs/show_control') {
+			this.ensureCurrentShowNames()
+			for (const id of SHOW_VARIABLE_IDS) this.invalidatedVariables.add(id)
+			this.debounceUpdateVariables()
 		}
 	}
 }

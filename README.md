@@ -10,6 +10,23 @@ While developing the module, by using `yarn dev` the compiler will be run in wat
 
 ## Changes
 
+### v4.0.5
+
+Personal fork (not for upstream). Adds:
+
+- Headamp phantom on/off/toggle and feedback (`headamp_phantom`)
+- Channel HPF on/off, frequency (set and step, 20-400 Hz log scale), and slope
+- EQ, gate, and compressor/dynamics on/off/toggle with feedback
+- Polarity invert toggle and feedback
+- Mute state variables (`mute_ch_01` = `Muted` or `On`; mute groups = `Muted` or `Off`)
+- Current show cue/scene/snippet number and name variables
+- Optional signal meters (config checkbox, default off): dBFS variables and signal/clip feedbacks
+- Assign a channel (or other target) to a DCA or mute group, with feedback
+- Tap tempo for an FX delay-time parameter (default: Stereo Delay slot 1, parameter 2)
+- Headamp gain and digital trim up/down, plus gain/trim variables
+
+DCA Spill from v4.0.4 is unchanged.
+
 ### v4.0.4
 
 Personal fork of the official module (not for upstream). Adds DCA Spill control:

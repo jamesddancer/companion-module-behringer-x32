@@ -55,6 +55,23 @@ export function getDcaSpillLabel(value: number | undefined): string {
 	return CHOICES_DCA_SPILL.find((choice) => choice.id === value)?.label ?? 'Unknown'
 }
 
+export const CHOICES_HPF_SLOPE: DropdownChoice<number>[] = [
+	{ id: 0, label: '12 dB/oct' },
+	{ id: 1, label: '18 dB/oct' },
+	{ id: 2, label: '24 dB/oct' },
+]
+
+export const CHOICES_ASSIGN_MODE: DropdownChoice<string>[] = [
+	{ id: 'set', label: 'Set (assign)' },
+	{ id: 'clear', label: 'Clear (unassign)' },
+	{ id: 'toggle', label: 'Toggle' },
+]
+
+export const CHOICES_DCA_GROUPS: DropdownChoice<number>[] = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({
+	id: n,
+	label: `DCA ${n}`,
+}))
+
 export const CHOICES_COLOR: DropdownChoice<string>[] = [
 	{ label: 'Off', id: 'off' },
 	{ label: 'Red', id: 'red' },

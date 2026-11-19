@@ -26,9 +26,18 @@ import {
 	TalkbackDestinationsParseOptions,
 	GetTargetChoices,
 	CHOICES_DCA_SPILL,
+	CHOICES_DCA_GROUPS,
+	GetHeadampChoices,
 } from './choices.js'
 import { compareNumber, floatToDB, InstanceBaseExt, padNumber, stringifyValueAlways } from './util.js'
-import { UserRouteInPath, UserRouteOutPath, parseRefToPaths, ParseRefOptions } from './paths.js'
+import { UserRouteInPath, UserRouteOutPath, parseRefToPaths, ParseRefOptions, parseHeadampRef } from './paths.js'
+import {
+	METER_SOURCES,
+	METER_SIGNAL_THRESHOLD_DB,
+	METER_CLIP_THRESHOLD_LINEAR,
+	meterLinearToDb,
+	meterStatePath,
+} from './meters.js'
 import osc from 'osc'
 import { NumberComparitorPicker } from './input.js'
 import type { SetRequired } from 'type-fest'
@@ -403,6 +412,68 @@ export type FeedbacksSchema = {
 		type: 'boolean'
 		options: Record<string, never>
 	}
+	headamp_phantom: {
+		type: 'boolean'
+		options: {
+			headamp: string
+		}
+	}
+	hpf_on: {
+		type: 'boolean'
+		options: {
+			target: string
+		}
+	}
+	eq_on: {
+		type: 'boolean'
+		options: {
+			target: string
+		}
+	}
+	gate_on: {
+		type: 'boolean'
+		options: {
+			target: string
+		}
+	}
+	dyn_on: {
+		type: 'boolean'
+		options: {
+			target: string
+		}
+	}
+	invert: {
+		type: 'boolean'
+		options: {
+			target: string
+		}
+	}
+	dca_assign: {
+		type: 'boolean'
+		options: {
+			target: string
+			dca: number
+		}
+	}
+	mute_grp_assign: {
+		type: 'boolean'
+		options: {
+			target: string
+			mutegrp: number
+		}
+	}
+	meter_signal: {
+		type: 'boolean'
+		options: {
+			target: string
+		}
+	}
+	meter_clip: {
+		type: 'boolean'
+		options: {
+			target: string
+		}
+	}
 }
 
 function getDataNumber(data: osc.MetaArgument[] | undefined, index: number): number | undefined {
@@ -468,6 +539,41 @@ export function GetFeedbacksList(
 		allowMatrix: true,
 	}
 	const insertSourceChoices = GetTargetChoices(state, insertSourceParseOptions)
+	const hpfParseOptions: ParseRefOptions = { allowChannel: true }
+	const invertParseOptions: ParseRefOptions = { allowChannel: true, allowAuxIn: true }
+	const eqParseOptions: ParseRefOptions = {
+		allowChannel: true,
+		allowAuxIn: true,
+		allowFx: true,
+		allowBus: true,
+		allowMatrix: true,
+		allowStereo: true,
+		allowMono: true,
+	}
+	const gateParseOptions: ParseRefOptions = { allowChannel: true }
+	const dynParseOptions: ParseRefOptions = {
+		allowChannel: true,
+		allowBus: true,
+		allowMatrix: true,
+		allowStereo: true,
+		allowMono: true,
+	}
+	const grpParseOptions: ParseRefOptions = {
+		allowChannel: true,
+		allowAuxIn: true,
+		allowFx: true,
+		allowBus: true,
+		allowMatrix: true,
+		allowStereo: true,
+		allowMono: true,
+	}
+	const hpfChoices = GetTargetChoices(state, hpfParseOptions)
+	const invertChoices = GetTargetChoices(state, invertParseOptions)
+	const eqChoices = GetTargetChoices(state, eqParseOptions)
+	const gateChoices = GetTargetChoices(state, gateParseOptions)
+	const dynChoices = GetTargetChoices(state, dynParseOptions)
+	const grpChoices = GetTargetChoices(state, grpParseOptions)
+	const meterChoices = METER_SOURCES.map((source) => ({ id: source.id, label: source.label }))
 
 	const feedbackSubscriptionWrapper = (input: {
 		getPath: (options: CompanionOptionValues) => string | null
@@ -2589,11 +2695,266 @@ export function GetFeedbacksList(
 				bgcolor: 0xff7f00,
 				color: 0x000000,
 			},
+
 			...feedbackSubscriptionWrapper({
 				getPath: () => '/-undo/time',
 				getValue: (_evt, data) => {
 					const time = data && data[0]?.type === 's' ? data[0].value : ''
 					return !!time
+				},
+			}),
+		},
+		headamp_phantom: {
+			type: 'boolean',
+			name: 'Headamp phantom power',
+			description: 'True when 48V phantom is on for the selected headamp.',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Headamp',
+					id: 'headamp',
+					...convertChoices(GetHeadampChoices()),
+					expressionDescription: `eg 'local1', 'aes-a1', 'aes-b1'`,
+				},
+			],
+			defaultStyle: {
+				bgcolor: 0xff7f00,
+				color: 0x000000,
+			},
+			...feedbackSubscriptionWrapper({
+				getPath: (options) => {
+					const refPath = parseHeadampRef(options.headamp)
+					return refPath ? `${refPath}/phantom` : null
+				},
+				getValue: (_evt, data) => getDataNumber(data, 0) === 1,
+			}),
+		},
+		hpf_on: {
+			type: 'boolean',
+			name: 'Channel HPF on',
+			description: 'True when the channel high-pass filter is on.',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Target',
+					id: 'target',
+					...convertChoices(hpfChoices),
+					allowInvalidValues: true,
+				},
+			],
+			defaultStyle: {
+				bgcolor: 0x00ff7f,
+				color: 0x000000,
+			},
+			...feedbackSubscriptionWrapper({
+				getPath: (options) => parseRefToPaths(options.target, hpfParseOptions)?.hpf?.on ?? null,
+				getValue: (_evt, data) => getDataNumber(data, 0) === 1,
+			}),
+		},
+		eq_on: {
+			type: 'boolean',
+			name: 'EQ on',
+			description: 'True when EQ is on for the selected target.',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Target',
+					id: 'target',
+					...convertChoices(eqChoices),
+					allowInvalidValues: true,
+				},
+			],
+			defaultStyle: {
+				bgcolor: 0x00ff7f,
+				color: 0x000000,
+			},
+			...feedbackSubscriptionWrapper({
+				getPath: (options) => parseRefToPaths(options.target, eqParseOptions)?.eqOn?.path ?? null,
+				getValue: (_evt, data) => getDataNumber(data, 0) === 1,
+			}),
+		},
+		gate_on: {
+			type: 'boolean',
+			name: 'Gate on',
+			description: 'True when the channel gate is on.',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Target',
+					id: 'target',
+					...convertChoices(gateChoices),
+					allowInvalidValues: true,
+				},
+			],
+			defaultStyle: {
+				bgcolor: 0x00ff7f,
+				color: 0x000000,
+			},
+			...feedbackSubscriptionWrapper({
+				getPath: (options) => parseRefToPaths(options.target, gateParseOptions)?.gateOn?.path ?? null,
+				getValue: (_evt, data) => getDataNumber(data, 0) === 1,
+			}),
+		},
+		dyn_on: {
+			type: 'boolean',
+			name: 'Compressor/dynamics on',
+			description: 'True when dynamics are on for the selected target.',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Target',
+					id: 'target',
+					...convertChoices(dynChoices),
+					allowInvalidValues: true,
+				},
+			],
+			defaultStyle: {
+				bgcolor: 0x00ff7f,
+				color: 0x000000,
+			},
+			...feedbackSubscriptionWrapper({
+				getPath: (options) => parseRefToPaths(options.target, dynParseOptions)?.dynOn?.path ?? null,
+				getValue: (_evt, data) => getDataNumber(data, 0) === 1,
+			}),
+		},
+		invert: {
+			type: 'boolean',
+			name: 'Polarity invert',
+			description: 'True when polarity invert is on for the selected channel or aux.',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Target',
+					id: 'target',
+					...convertChoices(invertChoices),
+					allowInvalidValues: true,
+				},
+			],
+			defaultStyle: {
+				bgcolor: 0xff7f00,
+				color: 0x000000,
+			},
+			...feedbackSubscriptionWrapper({
+				getPath: (options) => parseRefToPaths(options.target, invertParseOptions)?.invert?.path ?? null,
+				getValue: (_evt, data) => getDataNumber(data, 0) === 1,
+			}),
+		},
+		dca_assign: {
+			type: 'boolean',
+			name: 'Assigned to DCA',
+			description: 'True when the target is assigned to the selected DCA group.',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Target',
+					id: 'target',
+					...convertChoices(grpChoices),
+					allowInvalidValues: true,
+				},
+				{
+					type: 'dropdown',
+					label: 'DCA',
+					id: 'dca',
+					...convertChoices(CHOICES_DCA_GROUPS),
+					disableAutoExpression: true,
+				},
+			],
+			defaultStyle: {
+				bgcolor: 0x00ff7f,
+				color: 0x000000,
+			},
+			...feedbackSubscriptionWrapper({
+				getPath: (options) => parseRefToPaths(options.target, grpParseOptions)?.grp?.dca ?? null,
+				getValue: (evt, data) => {
+					const bitmap = getDataNumber(data, 0) ?? 0
+					const bit = getOptNumber(evt.options, 'dca') - 1
+					return bit >= 0 && (bitmap & (1 << bit)) !== 0
+				},
+			}),
+		},
+		mute_grp_assign: {
+			type: 'boolean',
+			name: 'Assigned to mute group',
+			description: 'True when the target is assigned to the selected mute group.',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Target',
+					id: 'target',
+					...convertChoices(grpChoices),
+					allowInvalidValues: true,
+				},
+				{
+					type: 'dropdown',
+					label: 'Mute group',
+					id: 'mutegrp',
+					...convertChoices(GetMuteGroupChoices(state)),
+					disableAutoExpression: true,
+				},
+			],
+			defaultStyle: {
+				bgcolor: 0xff7f00,
+				color: 0x000000,
+			},
+			...feedbackSubscriptionWrapper({
+				getPath: (options) => parseRefToPaths(options.target, grpParseOptions)?.grp?.mute ?? null,
+				getValue: (evt, data) => {
+					const bitmap = getDataNumber(data, 0) ?? 0
+					const bit = getOptNumber(evt.options, 'mutegrp') - 1
+					return bit >= 0 && (bitmap & (1 << bit)) !== 0
+				},
+			}),
+		},
+		meter_signal: {
+			type: 'boolean',
+			name: 'Signal present',
+			description:
+				'True when the selected meter is above -60 dBFS. Requires "Enable signal meters" in the connection config.',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Target',
+					id: 'target',
+					...convertChoices(meterChoices),
+					disableAutoExpression: true,
+				},
+			],
+			defaultStyle: {
+				bgcolor: 0x00ff00,
+				color: 0x000000,
+			},
+			...feedbackSubscriptionWrapper({
+				getPath: (options) => meterStatePath(stringifyValueAlways(options.target)),
+				getValue: (_evt, data) => {
+					const linear = getDataNumber(data, 0)
+					if (linear === undefined) return false
+					return meterLinearToDb(linear) >= METER_SIGNAL_THRESHOLD_DB
+				},
+			}),
+		},
+		meter_clip: {
+			type: 'boolean',
+			name: 'Meter clip',
+			description:
+				'True when the selected meter is at or above 0 dBFS. Requires "Enable signal meters" in the connection config.',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Target',
+					id: 'target',
+					...convertChoices(meterChoices),
+					disableAutoExpression: true,
+				},
+			],
+			defaultStyle: {
+				bgcolor: 0xff0000,
+				color: 0xffffff,
+			},
+			...feedbackSubscriptionWrapper({
+				getPath: (options) => meterStatePath(stringifyValueAlways(options.target)),
+				getValue: (_evt, data) => {
+					const linear = getDataNumber(data, 0)
+					return linear !== undefined && linear >= METER_CLIP_THRESHOLD_LINEAR
 				},
 			}),
 		},

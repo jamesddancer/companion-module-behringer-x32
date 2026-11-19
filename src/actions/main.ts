@@ -25,6 +25,9 @@ import { getUndoActions, UndoActionsSchema } from './undo.js'
 import { FaderBankActionsSchema, getFaderBankActions } from './fader-bank.js'
 import { getHeadAmpActions, HeadAmpActionsSchema } from './headamp.js'
 import { getMiscActions, MiscActionsSchema } from './misc.js'
+import { getProcessingActions, type ProcessingActionsSchema } from './processing.js'
+import { getGroupActions, type GroupActionsSchema } from './groups.js'
+import { getTapTempoActions, type TapTempoActionsSchema } from './tap-tempo.js'
 
 export type ActionsSchema = XLiveActionsSchema &
 	MarkerActionsSchema &
@@ -49,13 +52,17 @@ export type ActionsSchema = XLiveActionsSchema &
 	UndoActionsSchema &
 	FaderBankActionsSchema &
 	HeadAmpActionsSchema &
-	MiscActionsSchema
+	MiscActionsSchema &
+	ProcessingActionsSchema &
+	GroupActionsSchema &
+	TapTempoActionsSchema
 
 export interface ActionsProps {
 	readonly transitions: X32Transitions
 	readonly state: X32State
 	readonly sendOsc: (path: string, args: OSCMetaArgument | OSCMetaArgument[]) => void
 	readonly ensureLoaded: (path: string | undefined) => void
+	readonly recordTapTempo: (key: string, maxIntervalMs: number) => number | null
 }
 
 export function GetActionsList(props: ActionsProps): CompanionActionDefinitions<ActionsSchema> {
@@ -84,5 +91,8 @@ export function GetActionsList(props: ActionsProps): CompanionActionDefinitions<
 		...getFaderBankActions(props),
 		...getHeadAmpActions(props),
 		...getMiscActions(props),
+		...getProcessingActions(props),
+		...getGroupActions(props),
+		...getTapTempoActions(props),
 	}
 }

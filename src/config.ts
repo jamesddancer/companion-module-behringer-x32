@@ -6,6 +6,7 @@ export const fadeFpsDefault = 10
 export type X32Config = {
 	host?: string
 	fadeFps?: number
+	enableMeters?: boolean
 }
 
 export function GetConfigFields(): SomeCompanionConfigField[] {
@@ -33,6 +34,15 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			max: 60,
 			step: 1,
 			default: fadeFpsDefault,
+		},
+		{
+			type: 'checkbox',
+			id: 'enableMeters',
+			label: 'Enable signal meters',
+			description:
+				'Subscribe to /meters and expose level (dBFS) variables plus signal/clip feedbacks. Off by default because meter traffic can be heavy. Requires a reconnect or config save to apply.',
+			width: 6,
+			default: false,
 		},
 	]
 }

@@ -79,7 +79,45 @@ export function headampGainToFloat(d: number): number {
 	return clamp((d + 12) / 72)
 }
 
-function clamp(val: number, min = 0, max = 1): number {
+/** OSC floats are 0..1. Map a linear parameter such as trim or FX time. */
+export function floatToLinear(f: number, min: number, max: number): number {
+	return clamp(f) * (max - min) + min
+}
+export function linearToFloat(value: number, min: number, max: number): number {
+	if (max === min) return 0
+	return clamp((value - min) / (max - min))
+}
+
+/** OSC floats are 0..1. Map a log-scale parameter such as HPF frequency. */
+export function floatToLog(f: number, min: number, max: number): number {
+	if (min <= 0 || max <= 0) return min
+	return min * Math.pow(max / min, clamp(f))
+}
+export function logToFloat(value: number, min: number, max: number): number {
+	if (min <= 0 || max <= 0 || max === min) return 0
+	const clamped = clamp(value, min, max)
+	return Math.log(clamped / min) / Math.log(max / min)
+}
+
+export const HPF_FREQ_MIN = 20
+export const HPF_FREQ_MAX = 400
+export const FX_DELAY_MS_MIN = 1
+export const FX_DELAY_MS_MAX = 3000
+
+export function floatToHpfHz(f: number): number {
+	return floatToLog(f, HPF_FREQ_MIN, HPF_FREQ_MAX)
+}
+export function hpfHzToFloat(hz: number): number {
+	return logToFloat(hz, HPF_FREQ_MIN, HPF_FREQ_MAX)
+}
+export function floatToDelayMs(f: number): number {
+	return floatToLinear(f, FX_DELAY_MS_MIN, FX_DELAY_MS_MAX)
+}
+export function delayMsToFloat(ms: number): number {
+	return linearToFloat(ms, FX_DELAY_MS_MIN, FX_DELAY_MS_MAX)
+}
+
+export function clamp(val: number, min = 0, max = 1): number {
 	return Math.min(Math.max(val, min), max)
 }
 

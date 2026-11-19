@@ -443,11 +443,78 @@ export function GetPresetsList(
 		}
 	}
 
+	presets['ch1-phantom'] = {
+		name: 'Local 1 phantom toggle',
+		type: 'simple',
+		style: { text: '48V\nLocal 1', size: 'auto', color: 0xffffff, bgcolor: 0x000000 },
+		steps: [{ down: [{ actionId: 'headamp_phantom', options: { headamp: 'local1', on: MUTE_TOGGLE } }], up: [] }],
+		feedbacks: [
+			{ feedbackId: 'headamp_phantom', options: { headamp: 'local1' }, style: { bgcolor: 0xff7f00, color: 0x000000 } },
+		],
+	}
+	presets['ch1-hpf'] = {
+		name: 'CH1 HPF toggle',
+		type: 'simple',
+		style: { text: 'HPF\nCH1', size: 'auto', color: 0xffffff, bgcolor: 0x000000 },
+		steps: [{ down: [{ actionId: 'hpf_on', options: { target: 'channel1', on: MUTE_TOGGLE } }], up: [] }],
+		feedbacks: [
+			{ feedbackId: 'hpf_on', options: { target: 'channel1' }, style: { bgcolor: 0x00ff7f, color: 0x000000 } },
+		],
+	}
+	presets['ch1-eq'] = {
+		name: 'CH1 EQ toggle',
+		type: 'simple',
+		style: { text: 'EQ\nCH1', size: 'auto', color: 0xffffff, bgcolor: 0x000000 },
+		steps: [{ down: [{ actionId: 'eq_on', options: { target: 'channel1', on: MUTE_TOGGLE } }], up: [] }],
+		feedbacks: [
+			{ feedbackId: 'eq_on', options: { target: 'channel1' }, style: { bgcolor: 0x00ff7f, color: 0x000000 } },
+		],
+	}
+	presets['ch1-gate'] = {
+		name: 'CH1 Gate toggle',
+		type: 'simple',
+		style: { text: 'Gate\nCH1', size: 'auto', color: 0xffffff, bgcolor: 0x000000 },
+		steps: [{ down: [{ actionId: 'gate_on', options: { target: 'channel1', on: MUTE_TOGGLE } }], up: [] }],
+		feedbacks: [
+			{ feedbackId: 'gate_on', options: { target: 'channel1' }, style: { bgcolor: 0x00ff7f, color: 0x000000 } },
+		],
+	}
+	presets['ch1-dyn'] = {
+		name: 'CH1 Comp toggle',
+		type: 'simple',
+		style: { text: 'Comp\nCH1', size: 'auto', color: 0xffffff, bgcolor: 0x000000 },
+		steps: [{ down: [{ actionId: 'dyn_on', options: { target: 'channel1', on: MUTE_TOGGLE } }], up: [] }],
+		feedbacks: [
+			{ feedbackId: 'dyn_on', options: { target: 'channel1' }, style: { bgcolor: 0x00ff7f, color: 0x000000 } },
+		],
+	}
+	presets['ch1-invert'] = {
+		name: 'CH1 polarity invert',
+		type: 'simple',
+		style: { text: 'Ø\nCH1', size: 'auto', color: 0xffffff, bgcolor: 0x000000 },
+		steps: [{ down: [{ actionId: 'invert', options: { target: 'channel1', on: MUTE_TOGGLE } }], up: [] }],
+		feedbacks: [
+			{ feedbackId: 'invert', options: { target: 'channel1' }, style: { bgcolor: 0xff7f00, color: 0x000000 } },
+		],
+	}
+	presets['tap-tempo-fx1'] = {
+		name: 'Tap tempo FX 1',
+		type: 'simple',
+		style: { text: 'Tap\nFX1', size: 'auto', color: 0xffffff, bgcolor: 0x000000 },
+		steps: [{ down: [{ actionId: 'tap_tempo', options: { slot: 1, param: 2 } }], up: [] }],
+		feedbacks: [],
+	}
+
 	const structure: CompanionPresetSection<X32Types>[] = [
 		{
 			id: 'dca-spill',
 			name: 'DCA Spill',
 			definitions: dcaSpillPresetIds,
+		},
+		{
+			id: 'processing',
+			name: 'Channel processing',
+			definitions: ['ch1-phantom', 'ch1-hpf', 'ch1-eq', 'ch1-gate', 'ch1-dyn', 'ch1-invert', 'tap-tempo-fx1'],
 		},
 		{
 			id: 'xlive',
