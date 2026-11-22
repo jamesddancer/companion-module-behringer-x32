@@ -67,6 +67,10 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 	 * we are using 5 seconds to be safe */
 	private subscribeInterval: NodeJS.Timeout | undefined
 
+	/** Last status passed to Companion, so heartbeat /xinfo replies do not spam the log */
+	private lastInstanceStatus: InstanceStatus | undefined
+	private lastInstanceStatusMessage: string | undefined
+
 	private readonly debounceUpdateCompanionBits: () => void
 	private readonly requestQueue: PQueue = new PQueue({
 		concurrency: 20,
@@ -163,13 +167,27 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 	}
 
 	/**
+	 * Update Companion instance status only when the status or message actually changes.
+	 * The OSC heartbeat sends /xinfo every 1.5s; repeating InstanceStatus.Ok each time
+	 * was logged as "Status: ok - null".
+	 */
+	private setInstanceStatus(status: InstanceStatus, message?: string): void {
+		if (this.lastInstanceStatus === status && this.lastInstanceStatusMessage === message) {
+			return
+		}
+		this.lastInstanceStatus = status
+		this.lastInstanceStatusMessage = message
+		this.updateStatus(status, message)
+	}
+
+	/**
 	 * Main initialization function called once the module
 	 * is OK to start doing things.
 	 */
 	public async init(config: X32Config): Promise<void> {
 		this.config = config
 
-		this.updateStatus(InstanceStatus.Connecting)
+		this.setInstanceStatus(InstanceStatus.Connecting)
 		this.setupOscSocket()
 
 		X32DeviceDetectorInstance.subscribe(this.id)
@@ -194,7 +212,7 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 		this.transitions = new X32Transitions(this)
 
 		if (this.config.host !== undefined) {
-			this.updateStatus(InstanceStatus.Connecting)
+			this.setInstanceStatus(InstanceStatus.Connecting)
 			this.setupOscSocket()
 			this.updateCompanionBits()
 		}
@@ -303,7 +321,7 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 	}
 
 	private setupOscSocket(): void {
-		this.updateStatus(InstanceStatus.Connecting)
+		this.setInstanceStatus(InstanceStatus.Connecting)
 
 		if (this.reconnectTimer) {
 			clearTimeout(this.reconnectTimer)
@@ -333,7 +351,7 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 
 		this.osc.on('error', (err: Error): void => {
 			this.log('error', `Error: ${err.message}`)
-			this.updateStatus(InstanceStatus.ConnectionFailure, err.message)
+			this.setInstanceStatus(InstanceStatus.ConnectionFailure, err.message)
 			this.requestQueue.clear()
 			this.inFlightRequests = {}
 
@@ -389,7 +407,7 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 			}
 			doSync()
 
-			this.updateStatus(InstanceStatus.Connecting, 'Syncing')
+			this.setInstanceStatus(InstanceStatus.Connecting, 'Syncing')
 		})
 
 		this.osc.on('close' as any, () => {
@@ -423,7 +441,7 @@ export default class X32Instance extends InstanceBase<X32Types> implements Insta
 
 			switch (message.address) {
 				case '/xinfo':
-					this.updateStatus(InstanceStatus.Ok)
+					this.setInstanceStatus(InstanceStatus.Ok)
 
 					if (this.reconnectTimer) {
 						// Clear the timer, as it is alive

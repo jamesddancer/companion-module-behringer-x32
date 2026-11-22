@@ -10,6 +10,11 @@ While developing the module, by using `yarn dev` the compiler will be run in wat
 
 ## Changes
 
+### v99.0.1
+
+- Stop logging `Status: ok` on every `/xinfo` heartbeat; Companion status is updated only when it changes.
+- Document that writing `/-stat/dcaspill` does not trigger the console's surface DCA spill. The action still sends that status parameter (0 = Off, 1–8 = DCA 1–8). On an X32 Compact with firmware 4.13 this was observed to select the DCA without spilling member channels onto the left faders. Physical spill remains: Press SELECT on the DCA; press the DCA layer button to page; change the left fader layer or hold the DCA layer button to cancel. There is no documented console preference that enables spill (X32-Edit “DCA-Spill layer jump” is an editor GUI setting only), and no documented OSC command is known to start spill on the surface faders. Feedback and the `dca_spill` variable still follow `/-stat/dcaspill`.
+
 ### v99.0.0
 
 Same features as v4.0.5. Version set high so official Bitfocus releases of `behringer-x32` will not supersede this personal fork.

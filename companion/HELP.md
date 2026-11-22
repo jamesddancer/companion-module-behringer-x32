@@ -24,7 +24,7 @@ We support the following actions:
 | Load Console Snippet                                           | Loads the given snippet from the consoles internal snippet list 0-99                                               |
 | Tape Operation                                                 | Stop,Play,PlayPause,Record,RecordPause,Fast Forward,Rewind of the tape Deck                                        |
 | Talkback Talk                                                  | Talkback talk on/off                                                                                               |
-| DCA Spill                                                      | Spill a single DCA onto the channel fader bank, or turn spill off (firmware 4.04+, 0=Off, 1-8=DCA 1-8)             |
+| DCA Spill                                                      | Sets /-stat/dcaspill (0=Off, 1-8=DCA 1-8). Status get/set only; does not trigger surface spill (see note below)    |
 | Headamp phantom                                                | 48V on/off/toggle for a local or AES50 headamp (/headamp/NNN/phantom)                                              |
 | Channel HPF                                                    | On/off, frequency (20-400 Hz log) and slope (12/18/24) for input channels                                          |
 | EQ / Gate / Comp                                               | On/off/toggle for supported targets (/…/eq/on, /ch/NN/gate/on, /…/dyn/on)                                          |
@@ -40,6 +40,8 @@ Show variables: `show_control` (Cue / Scene / Snippet), `show_current` (highligh
 Signal meters are off by default. Enable **Enable signal meters** in the connection settings to subscribe to `/meters/0` and `/meters/2`. Variables such as `meter_ch_01` show dBFS; feedbacks **Signal present** (-60 dBFS) and **Meter clip** (0 dBFS) are available. `/ch/NN/preamp/hpon` is the high-pass filter, not phantom power (that typo appears in some OSC docs).
 
 Tap tempo defaults to FX slot 1, parameter 2 (Stereo Delay _Time_, 1-3000 ms as OSC float 0-1). For 3-Tap, 4-Tap and most other delay FX, Time is usually parameter 1.
+
+The **DCA Spill** action writes `/-stat/dcaspill` (`0` = Off, `1`–`8` = DCA 1–8; Maillot unofficial OSC, firmware 4.04+). That path is a status value, not a SELECT-button press. On an X32 Compact with firmware 4.13, writing it selected the DCA but did not spill member channels onto the left faders. To spill on the desk: Press SELECT on the DCA (flashing SELECT on the DCA). Press the DCA layer button to toggle spill pages. Change the left fader layer, or hold the DCA layer button, to cancel. There is no documented console preference that enables or disables spill; X32-Edit “DCA-Spill layer jump” is an editor GUI setting only. No documented OSC command is known to start spill on the surface faders. The **DCA Spill active** feedback and the `dca_spill` variable follow the same status parameter.
 
 for additional actions please raise a feature request at [github](https://github.com/bitfocus/companion-module-behringer-x32)
 

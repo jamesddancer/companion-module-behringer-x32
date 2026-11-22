@@ -5,7 +5,7 @@
 	"name": "behringer-x32",
 	"shortname": "x32",
 	"description": "Module for controling the Midas M32 and Behringer X32 consoles",
-	"version": "99.0.0",
+	"version": "99.0.1",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-behringer-x32.git",
 	"bugs": "https://github.com/bitfocus/companion-module-behringer-x32/issues",

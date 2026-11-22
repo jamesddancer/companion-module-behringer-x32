@@ -165,7 +165,7 @@ export const VariableDefinitions: MyVariableDefinitions = {
 		},
 	},
 	dca_spill: {
-		name: 'Current DCA Spill',
+		name: 'Current DCA Spill (/-stat/dcaspill status: Off or DCA 1–8)',
 		oscPath: '/-stat/dcaspill',
 		getValue: (args) => {
 			const value = args && args[0]?.type === 'i' ? args[0].value : 0

@@ -1553,7 +1553,7 @@ export function GetFeedbacksList(
 			type: 'boolean',
 			name: 'DCA Spill active',
 			description:
-				'True when the selected DCA is currently spilled onto the channel fader bank (or when Off is selected and no spill is ongoing). Requires firmware 4.04 or later. Mapping: 0 = Off, 1 = DCA 1, ... 8 = DCA 8.',
+				'True when the console reports this value on /-stat/dcaspill (0 = Off, 1 = DCA 1, … 8 = DCA 8). This is the documented spill status, not an independent confirmation that members are on the left faders. Writing the DCA Spill action does not start surface spill; use Press SELECT on the DCA on the desk.',
 			options: [
 				{
 					type: 'dropdown',

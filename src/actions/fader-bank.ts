@@ -371,7 +371,7 @@ export function getFaderBankActions(props: ActionsProps): CompanionActionDefinit
 		'dca-spill': {
 			name: 'DCA Spill',
 			description:
-				'Spill a single DCA group onto the channel fader bank, or turn spill off. Requires console firmware 4.04 or later. Sends /-stat/dcaspill as an integer where 0 = Off, 1 = DCA 1, 2 = DCA 2, ... 8 = DCA 8 (from Maillot unofficial OSC protocol: range [0...8], 0 means no spill is ongoing).',
+				'Sets the console status /-stat/dcaspill as an integer: 0 = Off, 1 = DCA 1, … 8 = DCA 8 (Maillot unofficial OSC, firmware 4.04+). Writing this path selects the DCA but does not trigger the desk’s surface spill (Press SELECT on the DCA to spill members onto the left faders; press the DCA layer button to page; change the left fader layer or hold the DCA layer button to cancel). There is no known OSC command or console preference that starts spill on the faders; X32-Edit “DCA-Spill layer jump” is an editor GUI setting only. Feedback and the dca_spill variable follow this same status parameter.',
 			options: [
 				{
 					type: 'dropdown',
